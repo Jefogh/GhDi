@@ -11,8 +11,8 @@ find_package(OpenVINO REQUIRED)
 # إضافة المسارات
 include_directories(include)
 
-# تعريف الهدف التنفيذي
-add_executable(main src/main.cpp src/trained_model.cpp)
+# تعريف المكتبة
+add_library(trained_model SHARED src/trained_model.cpp)
 
 # ربط المكتبات
-target_link_libraries(main ${OpenCV_LIBS} openvino::runtime)
+target_link_libraries(trained_model ${OpenCV_LIBS} openvino::runtime)
