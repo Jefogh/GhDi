@@ -14,14 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # إعداد بيئة OpenVINO
       - name: Install OpenVINO
         run: |
           curl -o openvino.exe https://registrationcenter-download.intel.com/akdlm/irc_nas/17770/l_openvino_toolkit_p_2021.4.752.exe
-          start /wait openvino.exe --silent --installpath "C:\Program Files (x86)\Intel\OpenVINO"
+          Start-Process -FilePath "./openvino.exe" -ArgumentList '--silent', '--installpath', '"C:\Program Files (x86)\Intel\OpenVINO"' -Wait
           setx INTEL_OPENVINO_DIR "C:\Program Files (x86)\Intel\OpenVINO"
-          setx PATH "%PATH%;C:\Program Files (x86)\Intel\OpenVINO\bin"
-          "C:\Program Files (x86)\Intel\OpenVINO\bin\setupvars.bat"
+          setx PATH "$Env:PATH;C:\Program Files (x86)\Intel\OpenVINO\bin"
+          cmd.exe /c "C:\Program Files (x86)\Intel\OpenVINO\bin\setupvars.bat"
 
       # تثبيت أدوات البناء الأساسية
       - name: Install Build Tools
