@@ -10,16 +10,40 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+
+    # تثبيت OpenVINO
+    - name: Install OpenVINO
+      run: |
+        # تحديث النظام
+        sudo apt-get update
+        sudo apt-get install -y lsb-release wget gnupg
+        # إضافة مفتاح OpenVINO
+        sudo apt-key adv --fetch-keys http://registrationcenter-download.intel.com/akdlm/irc_nas/17437/l_openvino_2021.4.2.643_offline.tgz
+        # إضافة مستودع OpenVINO
+        sudo add-apt-repository "deb [arch=amd64] https://repo.download.intel.com/openvino/openvino_2021.4.2/ubuntu18.04 stable main"
+        sudo apt-get update
+        # تثبيت OpenVINO
+        sudo apt-get install -y openvino
+
+    # تثبيت الاعتماديات الأخرى مثل CMake و OpenCV
     - name: Install Dependencies
-      run: sudo apt-get update && sudo apt-get install -y cmake g++ libopencv-dev
+      run: |
+        sudo apt-get install -y cmake g++ libopencv-dev
+
+    # إنشاء مجلد البناء
+    - name: Create Build Directory
+      run: mkdir -p build
+
+    # بناء المشروع
     - name: Build Project
       run: |
-        mkdir build
         cd build
-        cmake ..
+        cmake .. -DOpenVINO_DIR="/opt/intel/openvino_2021/cmake"  # تحديد المسار لـ OpenVINO
         make
+
+    # رفع المكتبة
     - name: Upload Library
       uses: actions/upload-artifact@v3
       with:
         name: trained_model_library
-        path: build/libtrained_model.so  # غيّر الامتداد حسب النظام
+        path: build/libtrained_model.so  # غيّر الامتداد حسب النظام (على Linux سيكون .so)
