@@ -1,4 +1,4 @@
-name: Build and Export Library (Windows)
+name: Build and Export Library on Windows
 
 on:
   push:
@@ -14,22 +14,22 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      # تثبيت متطلبات البناء على Windows
-      - name: Install Build Tools and Dependencies
-        run: |
-          choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools cmake python
-          refreshenv
-          pip install --upgrade pip
-          pip install openvino
-
-      # تحميل وتثبيت OpenVINO على Windows
+      # إعداد بيئة OpenVINO
       - name: Install OpenVINO
         run: |
-          curl -L -o openvino.zip https://storage.openvinotoolkit.org/repositories/openvino/2021.4/l_openvino_toolkit_runtime_windows_2021.4.752.zip
-          tar -xf openvino.zip
-          cd l_openvino_toolkit_runtime_windows_2021.4.752
-          setupvars.bat
-          call install_dependencies.bat
+          curl -o openvino.exe https://registrationcenter-download.intel.com/akdlm/irc_nas/17770/l_openvino_toolkit_p_2021.4.752.exe
+          start /wait openvino.exe --silent --installpath "C:\Program Files (x86)\Intel\OpenVINO"
+          setx INTEL_OPENVINO_DIR "C:\Program Files (x86)\Intel\OpenVINO"
+          setx PATH "%PATH%;C:\Program Files (x86)\Intel\OpenVINO\bin"
+          "C:\Program Files (x86)\Intel\OpenVINO\bin\setupvars.bat"
+
+      # تثبيت أدوات البناء الأساسية
+      - name: Install Build Tools
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          choco install visualstudio2019buildtools -y
+          choco install opencv -y
+          refreshenv
 
       # إعداد مجلد البناء
       - name: Create Build Directory
@@ -39,12 +39,12 @@ jobs:
       - name: Build Project
         run: |
           cd build
-          cmake .. -G "Visual Studio 17 2022" -DOpenVINO_DIR="C:/Program Files (x86)/IntelSWTools/openvino_2021.4.752/deployment_tools/cmake"
+          cmake .. -G "Visual Studio 16 2019" -A x64 -DOpenVINO_DIR="C:\Program Files (x86)\Intel\OpenVINO\runtime\cmake"
           cmake --build . --config Release
 
-      # رفع المكتبة
+      # رفع المكتبة الناتجة
       - name: Upload Built Library
         uses: actions/upload-artifact@v3
         with:
           name: built_library
-          path: build/Release/trained_model.lib # أو اسم الملف الناتج
+          path: build/Release/trained_model.dll
