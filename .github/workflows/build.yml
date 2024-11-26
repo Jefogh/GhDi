@@ -1,82 +1,50 @@
-name: Build and Install OpenVINO
+name: Build and Export Library (Windows)
 
 on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      # التحقق من الشيفرة
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
-
-      - name: Install dependencies
+      # تثبيت متطلبات البناء على Windows
+      - name: Install Build Tools and Dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            git \
-            wget \
-            python3-dev \
-            python3-pip \
-            libopencv-dev \
-            lsb-release \
-            gnupg
-
-      - name: Install OpenVINO Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libusb-1.0-0 \
-            libudev-dev \
-            libnuma-dev
-
-      - name: Download and Install OpenVINO (with correct download link)
-        run: |
-          wget https://registrationcenter-download.intel.com/akdlm/irc_nas/17437/l_openvino_2021.4.2.643_offline.tgz
-          tar -xvf l_openvino_2021.4.2.643_offline.tgz
-          cd l_openvino_2021.4.2.643
-          sudo ./install_GUI.sh --silent
-
-      - name: Source OpenVINO environment variables
-        run: |
-          source /opt/intel/openvino_2021.4.2.643/env/vars.sh
-          
-      - name: Install Python bindings for OpenVINO
-        run: |
+          choco install -y visualstudio2022buildtools visualstudio2022-workload-vctools cmake python
+          refreshenv
           pip install --upgrade pip
           pip install openvino
 
-      - name: Verify OpenVINO installation
+      # تحميل وتثبيت OpenVINO على Windows
+      - name: Install OpenVINO
         run: |
-          source /opt/intel/openvino_2021.4.2.643/env/vars.sh
-          python -c "import openvino"
-          
-      - name: Install Python dependencies
-        run: |
-          pip install -r requirements.txt
+          curl -L -o openvino.zip https://storage.openvinotoolkit.org/repositories/openvino/2021.4/l_openvino_toolkit_runtime_windows_2021.4.752.zip
+          tar -xf openvino.zip
+          cd l_openvino_toolkit_runtime_windows_2021.4.752
+          setupvars.bat
+          call install_dependencies.bat
 
-      - name: Build the project
-        run: |
-          mkdir -p build
-          cd build
-          cmake ..
-          make
+      # إعداد مجلد البناء
+      - name: Create Build Directory
+        run: mkdir build
 
-      - name: Run tests
+      # بناء المشروع باستخدام CMake
+      - name: Build Project
         run: |
           cd build
-          ./your_test_executable
+          cmake .. -G "Visual Studio 17 2022" -DOpenVINO_DIR="C:/Program Files (x86)/IntelSWTools/openvino_2021.4.752/deployment_tools/cmake"
+          cmake --build . --config Release
 
+      # رفع المكتبة
+      - name: Upload Built Library
+        uses: actions/upload-artifact@v3
+        with:
+          name: built_library
+          path: build/Release/trained_model.lib # أو اسم الملف الناتج
