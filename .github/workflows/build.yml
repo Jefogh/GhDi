@@ -1,0 +1,25 @@
+name: Build and Export Library
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install Dependencies
+      run: sudo apt-get update && sudo apt-get install -y cmake g++ libopencv-dev
+    - name: Build Project
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+    - name: Upload Library
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained_model_library
+        path: build/libtrained_model.so  # غيّر الامتداد حسب النظام
